@@ -6,6 +6,11 @@ Las estimaciones presentadas se basan en la información sobre las velocidades d
 
 Debido a las restricciones de derechos de uso asociadas al aplicativo **Matlab** empleado para el cálculo de las áreas de desove, disponible en el repositorio: https://github.com/N4W-Facility/Spawning_Ground_Model, se desarrolló un modelo alternativo de estimación utilizando software de código abierto **(Python 3.12.4)**. Este modelo se fundamenta en la información de la red hídrica y permite incorporar datos independientes de la cuenca, facilitando así su adaptación y uso en diferentes contextos.
 
+## Streamlit App
+
+También puedes encontrar este código en el aplicativo de Streamlit. Hay dos opciones disponibles para calcular áreas de desove en la cuenca Magdalena-Cauca [(AQUÍ)](https://areasdesove-gs7qcre3gdc8n8r2brm4ra), y otra más general [(AQUÍ)](https://areasdesove-cazetwa6bricxkmfqhste2.streamlit.app/), donde puedes usar datos propios de la cuenca de tu interés.
+
+
 **Es importante destacar que, los archivos de datos a utilizar en el modelo debe contener los nombres de columnas correspondientes que se presentan a continuación:**
 
 
