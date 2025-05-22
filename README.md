@@ -8,7 +8,7 @@ Debido a las restricciones de derechos de uso asociadas al aplicativo **Matlab**
 
 ## Streamlit App
 
-También puedes encontrar este código en el aplicativo de Streamlit. Hay dos opciones disponibles para calcular áreas de desove en la cuenca Magdalena-Cauca [(AQUÍ)](https://areasdesove-gs7qcre3gdc8n8r2brm4ra), y otra más general [(AQUÍ)](https://areasdesove-cazetwa6bricxkmfqhste2.streamlit.app/), donde puedes usar datos propios de la cuenca de tu interés.
+También puedes encontrar este código en el aplicativo de Streamlit. Hay dos opciones disponibles para calcular áreas de desove en la cuenca Magdalena-Cauca [(AQUÍ)](https://areasdesove-gs7qcre3gdc8n8r2brm4ra.streamlit.app/), y otra más general [(AQUÍ)](https://areasdesove-cazetwa6bricxkmfqhste2.streamlit.app/), donde puedes usar datos propios de la cuenca de tu interés.
 
 
 **Es importante destacar que, los archivos de datos a utilizar en el modelo debe contener los nombres de columnas correspondientes que se presentan a continuación:**
