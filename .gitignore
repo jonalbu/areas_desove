@@ -7,8 +7,9 @@ Resultados/
 *.zip
 *xlsx
 *.csv
-modelo_con_umbral_app.pyc
-modelo_sin_umbral_app.pyc
+modelo_con_umbral_app.py
+modelo_sin_umbral_app.py
+modelo_t_grafo_full.py
 pruebas.ipynb
 Archivos_from_Github
 Tabla_de_Centrales
