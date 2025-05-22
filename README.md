@@ -4,7 +4,7 @@
 
 Las estimaciones presentadas se basan en la información sobre las velocidades de las corrientes de agua de la red hídrica de la cuenca de los ríos Magdalena y Cauca, según lo reportado por **López-Casas et al. (2025)**. En dicho artículo, además, se exponen los resultados de la estimación de las áreas de desove de las especies potádromas presentes en la cuenca.
 
-Debido a las restricciones de derechos de uso asociadas al aplicativo **Matlab** empleado para el cálculo de las áreas de desove, disponible en el repositorio: https://github.com/N4W-Facility/Spawning_Ground_Model, se desarrolló un modelo alternativo de estimación utilizando software de código abierto **(Python 3.12.4)**. Este modelo se fundamenta en la información de la red hídrica y permite incorporar datos independientes de la cuenca, facilitando así su adaptación y uso en diferentes contextos.
+Debido a las restricciones de derechos de uso asociadas al aplicativo **Matlab** empleado para el cálculo de las áreas de desove, disponible en el repositorio: https://github.com/N4W-Facility/Spawning_Ground_Model, se desarrolló un [modelo alternativo](modelo.py) de estimación utilizando software de código abierto **(Python 3.12.4)**. Este modelo se fundamenta en la información de la red hídrica y permite incorporar datos independientes de la cuenca, facilitando así su adaptación y uso en diferentes contextos.
 
 ## Streamlit App
 
