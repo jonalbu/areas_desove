@@ -10,7 +10,7 @@ import zipfile
 import tempfile
 
 st.set_page_config(page_title="Rutas Acuáticas", layout="wide")
-st.title("Cálculo de Áreas de desove en Red Hídrica")
+st.title("Cálculo de Áreas de desove en las Cuencas Magdalena y Cauca")
 
 # Instrucciones de formato de datos
 st.markdown("""
