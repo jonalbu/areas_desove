@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .env
 Resultados/
+SHP_Magdalena/copia_con_altitud
+SHP_Magdalena/sin_altitud
 *.rar
 *.zip
 *xlsx
