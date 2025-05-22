@@ -5,10 +5,11 @@ __pycache__/
 Resultados/
 SHP_Magdalena/copia_con_altitud/
 SHP_Magdalena/sin_altitud/
-Sitios_Colecta/Pto_colecta_shp
+Sitios_Colecta/*
+!Colecta.xlsx
 *.rar
 *.zip
-*.xlsx 
+MAGDALENA_TOPOLOGY.xlsx
 *.csv
 modelo_con_umbral_app.py
 pruebas.ipynb
