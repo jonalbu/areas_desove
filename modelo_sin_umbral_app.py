@@ -18,14 +18,6 @@ st.markdown("""
 
 Asegúrese de que los nombres de columnas coincidan exactamente y que las geometrías estén válidas.
 
-- **Red hidrográfica (.shp)**
-  - `from_node` (int): Identificador único del nodo origen de cada arco.
-  - `to_node` (int): Identificador único del nodo destino.
-  - `time` (float): Duración en **horas** de recorrer cada arco.
-  - `elevmed` (float): Elevación media del arco en metros.
-  - `grid_code` (int): Orden de Strahler del arco (>= 0).
-  - Geometría: líneas (`LineString`).
-
 - **Sitios de colecta (Excel)**
   - `sample_id` (string o int): Identificador de la muestra.
   - `place_name` (string): Nombre de la ubicación de la muestra.
@@ -35,9 +27,6 @@ Asegúrese de que los nombres de columnas coincidan exactamente y que las geomet
   - `min_time` (float): Tiempo mínimo en **horas** para filtrar recorrido.
   - `max_time` (float): Tiempo máximo en **horas** para filtrar recorrido.
 
-- **Centrales hidroeléctricas (.shp)**
-  - `status` (string): Estado de la central (p.ej. "Operativa").
-  - Geometría: puntos (`Point`).
 """
 )
 
