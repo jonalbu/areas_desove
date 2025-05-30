@@ -29,7 +29,7 @@ from geopandas.tools import sjoin_nearest
 def get_paths():
     base = os.getcwd()
     return (
-        os.path.join(base, "SHP_Magdalena", "Con_altitud", "streamsline_Magdalena_Times_altitud.shp"),
+        os.path.join(base, "SHP_Magdalena", "Con_altitud", "Red_Magdalena.shp"),
         os.path.join(base, "Sitios_Colecta", "Colecta.xlsx"),
         os.path.join(base, "DBase_Proyectos_Hidroelectricos_Magdalena", "Proyectos_Hidroelectricos.shp")
     )
@@ -51,8 +51,8 @@ hydro = gpd.read_file(shp_hydro)
 # 4. Convertir min/max originales (horas) a minutos
 sites['min_time_h'] = sites['min_time']
 sites['max_time_h'] = sites['max_time']
-sites['min_time']   = sites['min_time'] * 60.0
-sites['max_time']   = sites['max_time'] * 60.0
+sites['min_time']   = sites['min_time'] 
+sites['max_time']   = sites['max_time']
 
 # 5. Normalizar nombres de columnas
 darcs.columns = darcs.columns.str.strip().str.lower().str.replace(' ', '_')

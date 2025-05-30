@@ -16,7 +16,7 @@ st.title("Cálculo de Áreas de desove en Red Hídrica")
 st.markdown("""
 **Los archivos de entrada deben contener las siguientes columnas con la información correspondiente**
 
-Asegúrese que los nombres de columnas coincidan exactamente y que las geometrías estén válidas.
+Asegúrese de que los nombres de columnas coincidan exactamente y que las geometrías estén válidas.
 
 - **Red hidrográfica (.shp)**
   - `from_node` (int): Identificador único del nodo origen de cada arco.
@@ -44,13 +44,13 @@ Asegúrese que los nombres de columnas coincidan exactamente y que las geometrí
 # Parámetros de entrada
 st.sidebar.header("Entradas de Usuario")
 shp_zip = st.sidebar.file_uploader(
-    "Subir ZIP con los archivos Shapefile de la red hidrográfica", type="zip"
+    "Subir ZIP de Shapefile de red hidrográfica", type="zip"
 )
 xls_file = st.sidebar.file_uploader(
     "Subir Excel de sitios de Colecta (.xlsx)", type=["xlsx"]
 )
 hydro_zip = st.sidebar.file_uploader(
-    "Subir ZIP con los archivos Shapefile de las Centrales Hidroeléctricas", type="zip"
+    "Subir ZIP de Shapefile de Centrales Hidroeléctricas", type="zip"
 )
 
 # Función para cargar shapefile desde ZIP
@@ -93,8 +93,8 @@ if st.sidebar.button("Ejecutar Análisis"):
     # Convertir horas a minutos
     sites['min_time_h'] = sites['min_time']
     sites['max_time_h'] = sites['max_time']
-    sites['min_time'] = sites['min_time'] * 60
-    sites['max_time'] = sites['max_time'] * 60
+    sites['min_time'] = sites['min_time']
+    sites['max_time'] = sites['max_time']
 
     # Normalizar nombres de columnas
     arcs.columns = arcs.columns.str.strip().str.lower().str.replace(' ', '_')
@@ -165,14 +165,12 @@ if st.sidebar.button("Ejecutar Análisis"):
     df_map['lon'] = df_map.geometry.centroid.x
     st.subheader("Rutas extraídas")
     st.map(df_map[['lat','lon']])
-    
-    st.subheader("A continuación se presentan los resultados en CSV, GeoJSON y Shapefile de las áreas posibles de desove")
+
     # Descargas CSV y GeoJSON
     csv_data = df_map.drop(columns=['geometry','lat','lon']).to_csv(index=False).encode('utf-8')
     st.download_button("Descargar CSV", csv_data, file_name="arcos_desove.csv")
     st.download_button("Descargar GeoJSON", df_map.to_json(), file_name="arcos_desove.geojson")
-    st.markdown("El archivo GeoJSON se puede visualizar en la siguiente aplicación web: https://geojson.io/")
-    
+
     # Descargar SHP comprimido
     with tempfile.TemporaryDirectory() as tmpdir:
         shp_pref = os.path.join(tmpdir, "arcos_desove")
@@ -184,5 +182,5 @@ if st.sidebar.button("Ejecutar Análisis"):
                 zf.write(os.path.join(tmpdir, f), arcname=f)
         buf.seek(0)
         st.download_button("Descargar Shapefile (.zip)", buf.getvalue(), file_name="arcos_desove_shp.zip")
-        st.markdown("El archivo Shapefile se puede visualizar en QGIS o ArcGIS.")
+
     st.success("Procesamiento completo!")
