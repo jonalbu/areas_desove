@@ -6,12 +6,14 @@ Rio/
 Mapa_R/
 Resultados/
 Municipios/
+SHP_Magdalena/sin_altitud/*
 SHP_Magdalena/copia_con_altitud/
-SHP_Magdalena/sin_altitud/
+*.zip
+!Red_Magdalena.zip
+!Dpto_84.zip
 Sitios_Colecta/*
 !Colecta.xlsx
 *.rar
-*.zip
 MAGDALENA_TOPOLOGY.xlsx
 *.csv
 modelo_con_umbral_app.py

@@ -405,7 +405,7 @@ if st.sidebar.button("Ejecutar Análisis"):
         st.image(
             "mapa_arcos_desove.png",
             caption="Rutas de desove sobre mapa de Colombia",
-            use_column_width=True
+            use_container_width=True
         )
 
     except Exception as e:
@@ -423,7 +423,7 @@ if st.sidebar.button("Ejecutar Análisis"):
 
         # 2. Leer límites de departamentos desde ZIP:
         dep  <- st_read("Municipio_84.shp") %>% st_transform(4326) # la ruta debe contener todos los archivos del .shp. 
-        Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/Departamentos/Dpto_84.zip
+        #Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/Departamentos/Dpto_84.zip
 
         # 3. Leer ríos principales desde ZIP:
         rios <- st_read("Red_Magdalena.shp") %>% st_transform(4326) # la ruta debe contener todos los archivos del .shp. 
