@@ -90,12 +90,6 @@ if st.sidebar.button("Ejecutar Análisis"):
         st.error("Por favor suba todos los archivos requeridos.")
         st.stop()
 
-    # Convertir horas a minutos
-    sites['min_time_h'] = sites['min_time']
-    sites['max_time_h'] = sites['max_time']
-    sites['min_time'] = sites['min_time']
-    sites['max_time'] = sites['max_time']
-
     # Normalizar nombres de columnas
     arcs.columns = arcs.columns.str.strip().str.lower().str.replace(' ', '_')
     sites.columns = sites.columns.str.strip().str.lower().str.replace(' ', '_')

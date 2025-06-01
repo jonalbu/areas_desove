@@ -262,7 +262,7 @@ if st.sidebar.button("Ejecutar Análisis"):
     csv_bytes = csv_df.to_csv(index=False, sep=';', decimal=',').encode('utf-8-sig')
 
     st.markdown("""
-** Los archivos de salida contienen la información relevante que se detalla a continuación:**
+**Los archivos de salida contienen la información relevante que se detalla a continuación:**
 - `elevmed`: Elevación media del tramo.
 - `arcid_1`: Identificador del tramo.
 - `time`: Tiempo (horas) que demora el agua a lo largo de ese tramo.
@@ -401,7 +401,7 @@ if st.sidebar.button("Ejecutar Análisis"):
         plt.close(fig)
 
         # Mostrar la imagen en Streamlit
-        st.subheader("Mapa de desove generado en Python")
+        st.subheader("Mapa de desove")
         st.image(
             "mapa_arcos_desove.png",
             caption="Rutas de desove sobre mapa de Colombia",
@@ -412,44 +412,69 @@ if st.sidebar.button("Ejecutar Análisis"):
         st.warning(f"No se pudo generar el mapa en Python: {e}")
         
     r_snippet = """
-        # Código en R para la creación de mapa a partir
+        # -------------------- Paquetes necesarios --------------------
+        install.packages(c("sf", "ggplot2", "dplyr", "viridis"), dependencies = TRUE)
 
         library(sf)
         library(ggplot2)
         library(dplyr)
+        library(viridis)
 
-        # 1. Leer GeoJSON generado por Streamlit (ajusta ruta si está en subcarpeta):
-        arcos_geo <- st_read("arcos_desove.geojson") %>% st_transform(4326)
-
-        # 2. Leer límites de departamentos desde ZIP:
-        dep  <- st_read("Municipio_84.shp") %>% st_transform(4326) # la ruta debe contener todos los archivos del .shp. 
+        # -------------------- 1. Cargar capas --------------------
+        dep <- st_read("Departamento/Dpto_84.shp") %>% 
+        st_transform(4326) # la ruta debe contener todos los archivos del .shp. Capa de los departamentos
+        # la ruta debe contener todos los archivos del .shp. (ajusta ruta si está en subcarpeta):
         #Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/Departamentos/Dpto_84.zip
 
-        # 3. Leer ríos principales desde ZIP:
-        rios <- st_read("Red_Magdalena.shp") %>% st_transform(4326) # la ruta debe contener todos los archivos del .shp. 
+        rios <- st_read("/Rios/Red_Magdalena.shp") %>%
+        st_transform(4326)
+        # la ruta debe contener todos los archivos del .shp. (ajusta ruta si está en subcarpeta):
         # Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/SHP_Magdalena/Con_altitud/Red_Magdalena.zip
 
-        # 4. Graficar todo junto
-        p <- ggplot() +
-        geom_sf(data = dep, fill="gray95", color="gray40", size=0.3) +
-        geom_sf(data = rios, color="steelblue", size=0.4) +
-        geom_sf(data = arcos_geo,
-                aes(color = as.factor(sample_id)),
-                size=0.7, alpha=0.8) +
-        scale_color_viridis_d(name = "Sample ID") +
-        labs(
-            title    = "Rutas de posibles áreas de desove sobre mapa de Colombia",
-            x = "Longitud", y = "Latitud"
-        ) +
-        theme_minimal() +
+        Leer GeoJSON generado por Streamlit (ajusta ruta si está en subcarpeta):
+        arcos_geo <- st_read("arcos_desove.geojson") %>%
+        st_transform(4326)
+        # Cargar el archivo GeoJSON descargado desde la app de Streamlit
+
+        # -------------------- 2. Mapa general --------------------
+        mapa_general <- ggplot() +
+        geom_sf(data = dep, fill = "gray95", color = "gray70", size = 0.3) +
+        geom_sf(data = rios, color = "lightblue", size = 0.15, alpha = 0.3) +
+        geom_sf(data = arcos_geo, aes(color = as.factor(sample_id)), size = 1.2, alpha = 0.9) +
+        scale_color_viridis_d(name = "Sample ID", option = "C") +
+        labs(title = "Contexto nacional: rutas de desove") +
+        theme_minimal(base_size = 11) +
         theme(
-            legend.position = "right",
-            plot.title      = element_text(face="bold", size=16)
+            panel.background = element_rect(fill = "aliceblue", color = NA),
+            plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
         )
 
-        # 5. Guardar como PNG en la raíz del proyecto
-        ggsave("mapa_arcos_desove.png", plot = p, width = 10, height = 8, dpi = 300)
+        # -------------------- 3. Mapa con zoom --------------------
+        bbox <- st_bbox(arcos_geo)
+        xrange <- bbox["xmax"] - bbox["xmin"]
+        yrange <- bbox["ymax"] - bbox["ymin"]
+        margen <- 0.1
+
+        mapa_zoom <- ggplot() +
+        geom_sf(data = dep, fill = "gray95", color = "gray70", size = 0.3) +
+        geom_sf(data = rios, color = "lightblue", size = 0.15, alpha = 0.3) +
+        geom_sf(data = arcos_geo, aes(color = as.factor(sample_id)), size = 1.2, alpha = 0.9) +
+        scale_color_viridis_d(name = "Sample ID", option = "C") +
+        coord_sf(
+            xlim = c(bbox["xmin"] - margen * xrange, bbox["xmax"] + margen * xrange),
+            ylim = c(bbox["ymin"] - margen * yrange, bbox["ymax"] + margen * yrange)
+        ) +
+        labs(title = "Zoom automático sobre rutas de desove") +
+        theme_minimal(base_size = 11) +
+        theme(
+            panel.background = element_rect(fill = "aliceblue", color = NA),
+            plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+        )
+
+        # -------------------- 4. Exportar Mapas --------------------
+        ggsave("mapa_general_colombia.png", mapa_general, width = 10, height = 8, dpi = 300)
+        ggsave("mapa_zoom_desove.png", mapa_zoom, width = 10, height = 8, dpi = 300)        
         """
 
-    st.subheader("Código R para reproducir el mapa fuera de Streamlit")
+    st.subheader("Código R para reproducir el mapa fuera de esta aplicación")
     st.code(r_snippet, language="r")
