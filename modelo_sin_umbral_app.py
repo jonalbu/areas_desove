@@ -179,8 +179,9 @@ if st.sidebar.button("Ejecutar Análisis"):
     records = []
     for _, site in gdf_sites.iterrows():
         nid = int(site['node_init'])
-        # Longitudes acumuladas hacia aguas arriba
+        # Horas acumuladas aguas arriba
         lengths_time = nx.single_source_dijkstra_path_length(G_time_rev, nid, weight='weight')
+        # Longitudes acumuladas aguas arriba
         lengths_len  = nx.single_source_dijkstra_path_length(G_len_rev,  nid, weight='weight')
 
         valid = {n for n, d in lengths_time.items() if site['min_time'] <= d <= site['max_time']}
@@ -274,7 +275,7 @@ if st.sidebar.button("Ejecutar Análisis"):
 """)
     st.download_button("Descargar CSV", data=csv_bytes, file_name="arcos_desove.csv", mime="text/csv")
 
-        # -----------------------
+    # -----------------------
     # 15. Exportar GeoJSON (con todos los atributos) y guardarlo en disco
     # -----------------------
     # Convertir a EPSG:4326 y guardar a archivo físico
@@ -282,9 +283,11 @@ if st.sidebar.button("Ejecutar Análisis"):
     arcos_wgs.to_file("arcos_desove.geojson", driver="GeoJSON")
 
     # Crear el botón de descarga para quienes quieran el GeoJSON
+    geojson_str = arcos_wgs.to_json()
+    geojson_bytes = geojson_str.encode('utf-8')
     st.download_button(
         "Descargar GeoJSON",
-        data=arcos_wgs.to_json(),
+        data=geojson_bytes,
         file_name="arcos_desove.geojson",
         mime="application/json"
     )
@@ -310,7 +313,7 @@ if st.sidebar.button("Ejecutar Análisis"):
 
     st.success("Procesamiento completado!")
 
-         # ----------------------------
+    # ----------------------------
     # 17. Generar y mostrar mapa en Python
     # ----------------------------
     import matplotlib.pyplot as plt
@@ -368,7 +371,6 @@ if st.sidebar.button("Ejecutar Análisis"):
         )
 
         # 4) Agregar cuadrícula y ejes
-        import numpy as np
         xs = np.arange(-82, -66, 1)    # longitudes de ejemplo
         ys = np.arange(-4, 15, 1)      # latitudes de ejemplo
 
