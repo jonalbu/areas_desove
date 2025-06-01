@@ -2,8 +2,8 @@ __pycache__/
 .DS_Store
 *.pyc
 .env
-Municipios/
 Rio/
+Mapa_R/
 Resultados/
 SHP_Magdalena/copia_con_altitud/
 SHP_Magdalena/sin_altitud/
@@ -17,3 +17,4 @@ modelo_con_umbral_app.py
 pruebas.ipynb
 Archivos_from_Github
 Tabla_de_Centrales
+prueba.py
