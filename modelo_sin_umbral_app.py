@@ -321,7 +321,7 @@ if st.sidebar.button("Ejecutar Análisis"):
         arcos = gpd.read_file("arcos_desove.geojson").to_crs(4326)
 
         # Leer límites de departamentos y ríos (ajusta rutas si hace falta)
-        depts = gpd.read_file("Municipios/Municipio_84.shp").to_crs(4326)
+        depts = gpd.read_file("Departamentos/Dpto_84.shp").to_crs(4326)
         rios  = gpd.read_file("SHP_Magdalena/Con_altitud/Red_Magdalena.shp").to_crs(4326)
 
         # Preparar figura
@@ -420,7 +420,7 @@ if st.sidebar.button("Ejecutar Análisis"):
 
         # 2. Leer límites de departamentos desde ZIP:
         dep  <- st_read("Municipio_84.shp") %>% st_transform(4326) # la ruta debe contener todos los archivos del .shp. 
-        Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/Municipios/Municipio_84.zip
+        Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/Departamentos/Dpto_84.zip
 
         # 3. Leer ríos principales desde ZIP:
         rios <- st_read("Red_Magdalena.shp") %>% st_transform(4326) # la ruta debe contener todos los archivos del .shp. 
