@@ -278,13 +278,14 @@ if st.sidebar.button("Ejecutar Análisis"):
     # -----------------------
     # 15. Exportar GeoJSON (con todos los atributos) y guardarlo en disco
     # -----------------------
-    # Convertir a EPSG:4326 y guardar a archivo físico
     arcos_wgs = result_gdf.to_crs("EPSG:4326")
     arcos_wgs.to_file("arcos_desove.geojson", driver="GeoJSON")
 
-    # Crear el botón de descarga para quienes quieran el GeoJSON
-    geojson_str = arcos_wgs.to_json()
-    geojson_bytes = geojson_str.encode('utf-8')
+    # Abrimos el archivo físico y leemos sus bytes
+    with open("arcos_desove.geojson", "rb") as f:
+        geojson_bytes = f.read()
+
+    # Botón que ofrece esos bytes para descargar
     st.download_button(
         "Descargar GeoJSON",
         data=geojson_bytes,
