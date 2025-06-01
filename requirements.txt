@@ -4,5 +4,4 @@ pandas
 networkx
 shapely
 openpyxl
-matplotlib.pyplot
-matplotlib.patheffects
+matplotlib
