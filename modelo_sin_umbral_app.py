@@ -262,7 +262,7 @@ if st.sidebar.button("Ejecutar Análisis"):
     csv_bytes = csv_df.to_csv(index=False, sep=';', decimal=',').encode('utf-8-sig')
 
     st.markdown("""
-**Los archivos de salida contienen la información relevante que se detalla a continuación:**
+**Los siguientes archivos de salida contienen la información relevante que se detalla a continuación:**
 - `elevmed`: Elevación media del tramo.
 - `arcid_1`: Identificador del tramo.
 - `time`: Tiempo (horas) que demora el agua a lo largo de ese tramo.
@@ -273,23 +273,23 @@ if st.sidebar.button("Ejecutar Análisis"):
 - `species_nm`: Especie muestreada.
 - `cum_hrs`: Tiempo acumulado (horas) desde el sitio de colecta hasta el final de ese tramo.
 """)
-    st.download_button("Descargar CSV", data=csv_bytes, file_name="arcos_desove.csv", mime="text/csv")
+    st.download_button("Descargar CSV", data=csv_bytes, file_name="tramos_de_desove.csv", mime="text/csv")
 
     # -----------------------
     # 15. Exportar GeoJSON (con todos los atributos) y guardarlo en disco
     # -----------------------
     arcos_wgs = result_gdf.to_crs("EPSG:4326")
-    arcos_wgs.to_file("arcos_desove.geojson", driver="GeoJSON")
+    arcos_wgs.to_file("tramos_desove.geojson", driver="GeoJSON")
 
     # Abrimos el archivo físico y leemos sus bytes
-    with open("arcos_desove.geojson", "rb") as f:
+    with open("tramos_desove.geojson", "rb") as f:
         geojson_bytes = f.read()
 
     # Botón que ofrece esos bytes para descargar
     st.download_button(
         "Descargar GeoJSON",
         data=geojson_bytes,
-        file_name="arcos_desove.geojson",
+        file_name="tramos_desove.geojson",
         mime="application/json"
     )
 
@@ -297,9 +297,9 @@ if st.sidebar.button("Ejecutar Análisis"):
     # 16. Exportar Shapefile completo (ZIP)
     # -----------------------
     with tempfile.TemporaryDirectory() as tmpdir:
-        shp_pref = os.path.join(tmpdir, "arcos_desove")
+        shp_pref = os.path.join(tmpdir, "tramos_desove")
         result_gdf.to_file(shp_pref + ".shp")
-        files = [f for f in os.listdir(tmpdir) if f.startswith("arcos_desove.")]
+        files = [f for f in os.listdir(tmpdir) if f.startswith("tramos_desove.")]
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
             for f in files:
@@ -308,7 +308,7 @@ if st.sidebar.button("Ejecutar Análisis"):
         st.download_button(
             "Descargar Shapefile (.zip)",
             data=buf.getvalue(),
-            file_name="arcos_desove_shp.zip",
+            file_name="tramos_desove_shp.zip",
             mime="application/zip"
         )
 
@@ -322,7 +322,7 @@ if st.sidebar.button("Ejecutar Análisis"):
 
     try:
         # Leer el GeoJSON que acabamos de generar
-        arcos = gpd.read_file("arcos_desove.geojson").to_crs(4326)
+        arcos = gpd.read_file("tramos_desove.geojson").to_crs(4326)
 
         # Leer límites de departamentos y ríos (ajusta rutas si hace falta)
         depts = gpd.read_file("Departamentos/Dpto_84.shp").to_crs(4326)
@@ -388,14 +388,14 @@ if st.sidebar.button("Ejecutar Análisis"):
         ax.set_ylabel("Latitud")
 
         plt.tight_layout()
-        fig.savefig("mapa_arcos_desove.png", dpi=600)
+        fig.savefig("mapa_tramos_desove.png", dpi=600)
 
         # Botón de descarga para el PNG
-        with open("mapa_arcos_desove.png", "rb") as img_file:
+        with open("mapa_tramos_desove.png", "rb") as img_file:
             st.download_button(
                 "Descargar mapa de desove",
                 img_file.read(),
-                file_name="mapa_arcos_desove.png",
+                file_name="mapa_tramos_desove.png",
                 mime="image/png"
             )
         plt.close(fig)
@@ -403,7 +403,7 @@ if st.sidebar.button("Ejecutar Análisis"):
         # Mostrar la imagen en Streamlit
         st.subheader("Mapa de desove")
         st.image(
-            "mapa_arcos_desove.png",
+            "mapa_tramos_desove.png",
             caption="Rutas de desove sobre mapa de Colombia",
             use_container_width=True
         )
