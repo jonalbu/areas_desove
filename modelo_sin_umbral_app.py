@@ -13,28 +13,40 @@ import tempfile
 
 # Configuración de la app
 st.set_page_config(page_title="Rutas Acuáticas", layout="wide")
-st.title("Estimación Áreas de desove de Peces dulceacuícolas para la cuenca Magdalena-Cauca")
+#st.set_page_config(layout='wide', initial_sidebar_state='expanded')
+st.markdown("<h1>Estimación Áreas de desove de Peces dulceacuícolas para la cuenca Magdalena-Cauca</h1>", unsafe_allow_html=True)
 
+#st.sidebar.image("Logo/002.jpg", use_column_width=True)
+st.sidebar.image("Logo/002.jpg", use_column_width=True)
+st.sidebar.image("Logo/004.jpg", use_column_width=True)
+st.sidebar.image("Logo/007.jpg", use_column_width=True)
+
+with open('style.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    
 # Instrucciones de formato de datos
 st.markdown("""
-**Se requiere que el archivo de Excel de entrada incluya las siguientes columnas, utilizando los mismos nombres de encabezado:**
+<p id="in"> Se requiere que el archivo de Excel de entrada incluya las siguientes columnas, utilizando los mismos nombres de encabezado:</p>
 
-- **Sitios de colecta (Excel, .xlsx):**
-  - `sample_id`, `place_name`, `latitude`, `longitude`, `species_name`, `min_time`, `max_time`.
-  - `sample_id:` identificador único de cada muestra.
-  - `place_name:` nombre del sitio de colecta.
-  - `latitude:` coordenada de latitud del sitio de colecta en WGS84 (p.e. 7,2345678).
-  - `longitude:` coordenada de longitud del sitio de colecta en WGS84. (p.e. -73,4567890).
-  - `species_name:` nombre de la especie.
-  - `min_time:` tiempo mínimo en horas de desarrollo de ictioplancton colectado.
-  - `max_time:` tiempo máximo en horas de desarrollo de ictioplancton colectado.
 
-Asegúrate de que los nombres de columnas coincidan exactamente.
-""")
+ <ul>  <strong id="in"> Sitios de colecta (Excel, .xlsx):</strong>
+    
+  <li> <code> sample_id:</code> identificador único de cada muestra.</li>
+  <li> <code> place_name:</code> nombre del sitio de colecta.</li>
+  <li> <code> latitude:</code> coordenada de latitud del sitio de colecta en WGS84 (p.e. 7,2345678).</li>
+  <li> <code> longitude:</code> coordenada de longitud del sitio de colecta en WGS84. (p.e. -73,4567890).</li>
+  <li> <code> species_name:</code> nombre de la especie.</li>
+  <li> <code> min_time:</code> tiempo mínimo en horas de desarrollo de ictioplancton colectado.</li>
+  <li> <code> max_time:</code> tiempo máximo en horas de desarrollo de ictioplancton colectado.</li>
+  </ul>
 
-# ----------------------
+<p id="nota"> <strong> NOTA:</strong> Asegusere de que los nombres de columnas coincidan exactamente.</p> 
+</p>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------------
 # Parámetros de filtrado
-# ----------------------
+# ---------------------------------------------------------------------------------
 st.sidebar.header("Parámetros de Filtrado")
 # Cargar shapefile de centrales para obtener posibles estados
 def_shp_hydro = "DBase_Proyectos_Hidroelectricos_Magdalena/Proyectos_Hidroelectricos.shp"
@@ -60,39 +72,39 @@ xls_file = st.sidebar.file_uploader("Subir Excel de sitios de Colecta (.xlsx)", 
 # Asegúrate que estos archivos existan en tu estructura de carpetas
 def_shp_arcs = "SHP_Magdalena/Con_altitud/Red_Magdalena.shp"
 
-# ---------------------------------------
+# ---------------------------------------------------------------------------------
 # “Ejecutar Análisis”
-# ---------------------------------------
+# ---------------------------------------------------------------------------------
 if st.sidebar.button("Ejecutar Análisis"):
     # Validar que se subió Excel
     if xls_file is None:
         st.error("Por favor suba el archivo Excel de sitios.")
         st.stop()
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 1. Carga de todos los datos
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     arcs  = gpd.read_file(def_shp_arcs)        # Red hidro
     sites = pd.read_excel(xls_file, engine='openpyxl')  # Excel de sitios
     hydro = gpd.read_file(def_shp_hydro)       # Centrales hidroeléctricas
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 2. Normalizar nombre de columnas
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     arcs.columns  = arcs.columns.str.strip().str.lower().str.replace(' ', '_')
     sites.columns = sites.columns.str.strip().str.lower().str.replace(' ', '_')
     hydro.columns = hydro.columns.str.strip().str.lower().str.replace(' ', '_')
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 3. Filtrar centrales según estados seleccionados
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     if status_sel:
         hydro = hydro[hydro['status'].isin(status_sel)]
     # Sino, se considera todas
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 4. Filtrar arcos por elevación y Strahler
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     darcs = arcs[(arcs['elevmed'] <= elev_max) & (arcs['grid_code'] >= grid_min)].copy()
     # El peso “time” ya está en horas:
     darcs['weight_time'] = darcs['time']
@@ -102,11 +114,11 @@ if st.sidebar.button("Ejecutar Análisis"):
     # Usamos ese valor como peso de longitud:
     darcs['weight_len'] = darcs['length_m']
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 5. Construir dos grafos dirigidos:
     #    G_time: peso = horas
     #    G_len:  peso = longitud
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     G_time = nx.DiGraph()
     G_len  = nx.DiGraph()
     for _, r in darcs.iterrows():
@@ -141,9 +153,9 @@ if st.sidebar.button("Ejecutar Análisis"):
     nodes_all = pd.concat([df_start, df_end], ignore_index=True).drop_duplicates('node')
     nodes_all = gpd.GeoDataFrame(nodes_all, geometry='geometry', crs=darcs.crs)
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 7. Poda en centrales: cortar aristas aguas arriba de nodos de centrales
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     hydro_nodes = sjoin_nearest(
         hydro.to_crs(darcs.crs),
         nodes_all[['node','geometry']],
@@ -158,9 +170,9 @@ if st.sidebar.button("Ejecutar Análisis"):
             for succ in list(G_len_rev.successors(hn)):
                 G_len_rev.remove_edge(hn, succ)
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 8. Snap (vincular) cada sitio al nodo más cercano
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     gdf_sites = gpd.GeoDataFrame(
         sites,
         geometry=gpd.points_from_xy(sites['longitude'], sites['latitude']),
@@ -173,9 +185,9 @@ if st.sidebar.button("Ejecutar Análisis"):
         how='left', distance_col='dist'
     ).rename(columns={'node':'node_init'})
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 9. Calcular rutas y acumular horas y longitud
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     records = []
     for _, site in gdf_sites.iterrows():
         nid = int(site['node_init'])
@@ -206,9 +218,9 @@ if st.sidebar.button("Ejecutar Análisis"):
         sub['arcid_1']    = sub['arcid_1']
         records.append(sub)
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 10. Consolidar resultados en un GeoDataFrame
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     if records:
         result_gdf = gpd.GeoDataFrame(
             pd.concat(records, ignore_index=True),
@@ -222,9 +234,9 @@ if st.sidebar.button("Ejecutar Análisis"):
         ]
         result_gdf = gpd.GeoDataFrame(columns=cols, crs=darcs.crs)
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 11. Agregar totales por muestra (horas, minutos y longitud total)
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     totals = (
         result_gdf
         .groupby('sample_id')[['cum_hrs','cum_len']]
@@ -235,14 +247,14 @@ if st.sidebar.button("Ejecutar Análisis"):
     totals['total_min'] = totals['total_hrs'] * 60
     result_gdf = result_gdf.merge(totals, on='sample_id', how='left')
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 12. Longitud de cada arco (en unidades de CRS)
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     result_gdf['length'] = result_gdf.geometry.length
 
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     # 13. Mostrar mapa de rutas
-    # -----------------------
+    # ---------------------------------------------------------------------------------
     df_map = result_gdf.to_crs('EPSG:4326').copy()
     df_map['lat'] = df_map.geometry.centroid.y
     df_map['lon'] = df_map.geometry.centroid.x
@@ -317,99 +329,99 @@ if st.sidebar.button("Ejecutar Análisis"):
     # ----------------------------
     # 17. Generar y mostrar mapa en Python
     # ----------------------------
-    import matplotlib.pyplot as plt
-    import matplotlib.patheffects as pe  # Para contorno blanco en texto
+    # import matplotlib.pyplot as plt
+    # import matplotlib.patheffects as pe  # Para contorno blanco en texto
 
-    try:
-        # Leer el GeoJSON que acabamos de generar
-        arcos = gpd.read_file("tramos_desove.geojson").to_crs(4326)
+    # try:
+    #     # Leer el GeoJSON que acabamos de generar
+    #     arcos = gpd.read_file("tramos_desove.geojson").to_crs(4326)
 
-        # Leer límites de departamentos y ríos (ajusta rutas si hace falta)
-        depts = gpd.read_file("Departamentos/Dpto_84.shp").to_crs(4326)
-        rios  = gpd.read_file("SHP_Magdalena/Con_altitud/Red_Magdalena.shp").to_crs(4326)
+    #     # Leer límites de departamentos y ríos (ajusta rutas si hace falta)
+    #     depts = gpd.read_file("Departamentos/Dpto_84.shp").to_crs(4326)
+    #     rios  = gpd.read_file("SHP_Magdalena/Con_altitud/Red_Magdalena.shp").to_crs(4326)
 
-        # Preparar figura
-        fig, ax = plt.subplots(figsize=(10, 8))
+    #     # Preparar figura
+    #     fig, ax = plt.subplots(figsize=(10, 8))
 
-        # 1) Dibuja departamentos en gris
-        depts.plot(ax=ax, facecolor="lightgray", edgecolor="gray", linewidth=0.3)
+    #     # 1) Dibuja departamentos en gris
+    #     depts.plot(ax=ax, facecolor="lightgray", edgecolor="gray", linewidth=0.3)
 
-        # 2) Dibuja ríos en azul
-        rios.plot(ax=ax, color="steelblue", linewidth=0.4)
+    #     # 2) Dibuja ríos en azul
+    #     rios.plot(ax=ax, color="steelblue", linewidth=0.4)
 
-        # 3) Dibuja cada ruta coloreada por sample_id
-        #    y prepara proxy artists para la leyenda:
+    #     # 3) Dibuja cada ruta coloreada por sample_id
+    #     #    y prepara proxy artists para la leyenda:
 
-        unique_ids = arcos["sample_id"].unique()
-        cmap = plt.get_cmap("viridis", len(unique_ids))
-        color_map = {sid: cmap(i) for i, sid in enumerate(unique_ids)}
+    #     unique_ids = arcos["sample_id"].unique()
+    #     cmap = plt.get_cmap("viridis", len(unique_ids))
+    #     color_map = {sid: cmap(i) for i, sid in enumerate(unique_ids)}
 
-        # Crear un proxy artist (línea vacía) por cada sample_id
-        for sid in unique_ids:
-            ax.plot([], [], color=color_map[sid], linewidth=2, label=str(sid))
+    #     # Crear un proxy artist (línea vacía) por cada sample_id
+    #     for sid in unique_ids:
+    #         ax.plot([], [], color=color_map[sid], linewidth=2, label=str(sid))
 
-        # Ahora recorremos cada tramo y dibujamos las líneas
-        for _, row in arcos.iterrows():
-            sid = row["sample_id"]
-            geom = row.geometry
-            color = color_map[sid]
+    #     # Ahora recorremos cada tramo y dibujamos las líneas
+    #     for _, row in arcos.iterrows():
+    #         sid = row["sample_id"]
+    #         geom = row.geometry
+    #         color = color_map[sid]
 
-            if geom.geom_type == "MultiLineString":
-                for part in geom.geoms:
-                    xs, ys = part.xy
-                    ax.plot(xs, ys, color=color, linewidth=0.7, alpha=0.8)
-            else:
-                xs, ys = geom.xy
-                ax.plot(xs, ys, color=color, linewidth=0.7, alpha=0.8)
+    #         if geom.geom_type == "MultiLineString":
+    #             for part in geom.geoms:
+    #                 xs, ys = part.xy
+    #                 ax.plot(xs, ys, color=color, linewidth=0.7, alpha=0.8)
+    #         else:
+    #             xs, ys = geom.xy
+    #             ax.plot(xs, ys, color=color, linewidth=0.7, alpha=0.8)
 
-        # Finalmente, dibujar la leyenda con un rótulo por cada sample_id
-        ax.legend(
-            title="ID Muestra",
-            bbox_to_anchor=(1.05, 1),
-            loc="upper left",
-            fontsize=8,
-            title_fontsize=9
-        )
+    #     # Finalmente, dibujar la leyenda con un rótulo por cada sample_id
+    #     ax.legend(
+    #         title="ID Muestra",
+    #         bbox_to_anchor=(1.05, 1),
+    #         loc="upper left",
+    #         fontsize=8,
+    #         title_fontsize=9
+    #     )
 
-        # 4) Agregar cuadrícula y ejes
-        xs = np.arange(-82, -66, 1)    # longitudes de ejemplo
-        ys = np.arange(-4, 15, 1)      # latitudes de ejemplo
+    #     # 4) Agregar cuadrícula y ejes
+    #     xs = np.arange(-82, -66, 1)    # longitudes de ejemplo
+    #     ys = np.arange(-4, 15, 1)      # latitudes de ejemplo
 
-        ax.set_xticks(xs)
-        ax.set_yticks(ys)
-        ax.tick_params(axis="both", labelsize=8)
-        ax.grid(which="both", linestyle="--", linewidth=0.5, color="gray", alpha=0.7)
+    #     ax.set_xticks(xs)
+    #     ax.set_yticks(ys)
+    #     ax.tick_params(axis="both", labelsize=8)
+    #     ax.grid(which="both", linestyle="--", linewidth=0.5, color="gray", alpha=0.7)
 
-        ax.set_title(
-            "Rutas de posibles áreas de desove sobre mapa de Colombia",
-            fontsize=14, fontweight="bold"
-        )
-        ax.set_xlabel("Longitud")
-        ax.set_ylabel("Latitud")
+    #     ax.set_title(
+    #         "Rutas de posibles áreas de desove sobre mapa de Colombia",
+    #         fontsize=14, fontweight="bold"
+    #     )
+    #     ax.set_xlabel("Longitud")
+    #     ax.set_ylabel("Latitud")
 
-        plt.tight_layout()
-        fig.savefig("mapa_tramos_desove.png", dpi=600)
+    #     plt.tight_layout()
+    #     fig.savefig("mapa_tramos_desove.png", dpi=600)
 
-        # Botón de descarga para el PNG
-        with open("mapa_tramos_desove.png", "rb") as img_file:
-            st.download_button(
-                "Descargar mapa de desove",
-                img_file.read(),
-                file_name="mapa_tramos_desove.png",
-                mime="image/png"
-            )
-        plt.close(fig)
+    #     # Botón de descarga para el PNG
+    #     with open("mapa_tramos_desove.png", "rb") as img_file:
+    #         st.download_button(
+    #             "Descargar mapa de desove",
+    #             img_file.read(),
+    #             file_name="mapa_tramos_desove.png",
+    #             mime="image/png"
+    #         )
+    #     plt.close(fig)
 
-        # Mostrar la imagen en Streamlit
-        st.subheader("Mapa de desove")
-        st.image(
-            "mapa_tramos_desove.png",
-            caption="Rutas de desove sobre mapa de Colombia",
-            use_container_width=True
-        )
+    #     # Mostrar la imagen en Streamlit
+    #     st.subheader("Mapa de desove")
+    #     st.image(
+    #         "mapa_tramos_desove.png",
+    #         caption="Rutas de desove sobre mapa de Colombia",
+    #         use_container_width=True
+    #     )
 
-    except Exception as e:
-        st.warning(f"No se pudo generar el mapa en Python: {e}")
+    # except Exception as e:
+    #     st.warning(f"No se pudo generar el mapa en Python: {e}")
         
     r_snippet = """
         # -------------------- Paquetes necesarios --------------------
