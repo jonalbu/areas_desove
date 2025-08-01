@@ -33,8 +33,7 @@ li {
 }
 
 .stApp {
-  background-image: url("https://github.com/jonalbu/areas_desove/blob/main/Logo/background.jpg?raw=true"),
-    linear-gradient(rgba(255, 255, 255, 0.83), rgba(0, 0, 0, 0.065));
+  background-image: url("https://github.com/jonalbu/areas_desove/blob/main/Logo/009.jpg?raw=true");
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: fixed;
