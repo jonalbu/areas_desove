@@ -13,10 +13,8 @@ import tempfile
 
 # Configuración de la app
 st.set_page_config(page_title="Rutas Acuáticas", layout="wide")
-#st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 st.markdown("<h1>Estimación Áreas de desove de Peces dulceacuícolas para la cuenca Magdalena-Cauca</h1>", unsafe_allow_html=True)
 
-#st.sidebar.image("Logo/002.jpg", use_column_width=True)
 st.sidebar.image("Logo/002.jpg", use_column_width=True)
 st.sidebar.image("Logo/004.jpg", use_column_width=True)
 st.sidebar.image("Logo/007.jpg", use_column_width=True)
