@@ -281,7 +281,7 @@ if st.sidebar.button("Ejecutar Análisis"):
 - `arcid_1`: Identificador del tramo.
 - `time`: Tiempo (horas) que demora el agua a lo largo de ese tramo.
 - `longitud`: Longitud de ese tramo (metros).
-- `cum_len`: Longitud acumulada desde el sitio de colecta hasta el final de ese tramo.
+- `cum_len`: Longitud acumulada desde el sitio de colecta hasta el final de ese tramo (metros).
 - `departamen`, `nombre_ent`, `nombre_geo`, `cod_munici`: atributos administrativos y de cuenca.
 - `place_name`: Nombre del punto de colecta.
 - `species_nm`: Especie muestreada.
