@@ -32,18 +32,8 @@ li {
   font-size: 20px;
 }
 
-/* .stApp {
-  background-image: url("Logo/010.jpg");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center center;
-  background-color: rgba(255, 255, 255, 0.5);
-
-} */
-
 .stApp {
-  background-image: url("Logo/011.png");
+  background-image: url("https://github.com/jonalbu/areas_desove/blob/main/Logo/011.png?raw=true");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
