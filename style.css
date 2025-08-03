@@ -32,13 +32,32 @@ li {
   font-size: 20px;
 }
 
-.stApp {
-  background-image: url("https://github.com/jonalbu/areas_desove/blob/main/Logo/009.jpg?raw=true");
+/* .stApp {
+  background-image: url("Logo/010.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-position: center center;
+  background-color: rgba(255, 255, 255, 0.5);
 
+} */
+
+.stApp {
+  background-image: url("Logo/011.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
+.block-container {
+  background: transparent;
+}
 
+.stApp::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.5); 
+    z-index: 0;
+    pointer-events: none;
+}
