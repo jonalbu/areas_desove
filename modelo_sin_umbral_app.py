@@ -24,6 +24,7 @@ st.markdown("<h1>Estimación Áreas de desove de Peces dulceacuícolas para la c
 st.sidebar.image("Logo/002.jpg", use_container_width=True)
 st.sidebar.image("Logo/004.jpg", use_container_width=True)
 st.sidebar.image("Logo/007.jpg", use_container_width=True)
+st.sidebar.markdown("""<p id="autor"> Foto por Jose L. Londoño Lopez</p>""", unsafe_allow_html=True)
 
 # Instrucciones de formato de datos
 st.markdown(""" 
