@@ -1,6 +1,6 @@
 import os
 import io
-import subprocess  # <— Asegúrate de importar subprocess
+import subprocess  
 import streamlit as st
 import geopandas as gpd
 import pandas as pd
@@ -72,7 +72,7 @@ xls_file = st.sidebar.file_uploader("Subir Excel de sitios de Colecta (.xlsx)", 
 
 # Rutas fijas de shapefiles auxiliares en el repositorio
 # Asegúrate que estos archivos existan en tu estructura de carpetas
-def_shp_arcs = "SHP_Magdalena/Con_altitud/Red_Magdalena.shp"
+def_shp_arcs = "SHP_Magdalena/Con_altitud/Red_Magdalena_n.shp"
 
 # ---------------------------------------------------------------------------------
 # “Ejecutar Análisis”
@@ -210,14 +210,16 @@ if st.sidebar.button("Ejecutar Análisis"):
         # Horas acumuladas hasta el nodo destino de cada arco:
         sub['cum_hrs'] = sub['to_node'].map(lengths_time)
         # Longitud acumulada hasta el nodo destino de cada arco:
-        sub['cum_len'] = sub['to_node'].map(lengths_len)
+        sub['cum_len_meters'] = sub['to_node'].map(lengths_len)
 
         # Heredar datos de departamento, municipio, río, cod_munici, arcid_1
         sub['departamen'] = sub['departamen']
         sub['nombre_ent'] = sub['nombre_ent']
-        sub['nombre_geo'] = sub['nombre_geo']
         sub['cod_munici'] = sub['cod_munici']
         sub['arcid_1']    = sub['arcid_1']
+        sub['waterbody'] = sub ['nombre_geo']
+        
+        
         records.append(sub)
 
     # ---------------------------------------------------------------------------------
@@ -231,8 +233,8 @@ if st.sidebar.button("Ejecutar Análisis"):
         )
     else:
         cols = list(darcs.columns) + [
-            'sample_id','place_name','species_nm','cum_hrs','cum_len',
-            'departamen','nombre_ent','nombre_geo','cod_munici','arcid_1'
+            'sample_id','place_name','species_nm','cum_hrs','cum_len_meters',
+            'departamen','nombre_ent','cod_munici','arcid_1', 'waterbody'
         ]
         result_gdf = gpd.GeoDataFrame(columns=cols, crs=darcs.crs)
 
@@ -241,10 +243,10 @@ if st.sidebar.button("Ejecutar Análisis"):
     # ---------------------------------------------------------------------------------
     totals = (
         result_gdf
-        .groupby('sample_id')[['cum_hrs','cum_len']]
+        .groupby('sample_id')[['cum_hrs','cum_len_meters']]
         .sum()
         .reset_index()
-        .rename(columns={'cum_hrs':'total_hrs','cum_len':'total_len'})
+        .rename(columns={'cum_hrs':'total_hrs','cum_len_meters':'total_len'})
     )
     totals['total_min'] = totals['total_hrs'] * 60
     result_gdf = result_gdf.merge(totals, on='sample_id', how='left')
@@ -268,8 +270,8 @@ if st.sidebar.button("Ejecutar Análisis"):
     # -----------------------
     csv_df = df_map[[
         'from_node','to_node','elevmed','arcid_1','time',
-        'length','cum_len','departamen','nombre_ent','nombre_geo','cod_munici',
-        'place_name','species_nm','cum_hrs',
+        'length','cum_len_meters','departamen','nombre_ent','cod_munici',
+        'place_name','species_nm','cum_hrs', 'waterbody'
     ]].copy()
     csv_df = csv_df.rename(columns={'length':'longitud'})
     # Usamos punto decimal y “;” como separador, UTF-8 con BOM:
@@ -281,11 +283,12 @@ if st.sidebar.button("Ejecutar Análisis"):
 - `arcid_1`: Identificador del tramo.
 - `time`: Tiempo (horas) que demora el agua a lo largo de ese tramo.
 - `longitud`: Longitud de ese tramo (metros).
-- `cum_len`: Longitud acumulada desde el sitio de colecta hasta el final de ese tramo (metros).
-- `departamen`, `nombre_ent`, `nombre_geo`, `cod_munici`: atributos administrativos y de cuenca.
+- `cum_len_meters`: Longitud acumulada desde el sitio de colecta hasta el final de ese tramo (metros).
+- `departamen`, `nombre_ent`, `cod_munici`: atributos administrativos y de cuenca.
 - `place_name`: Nombre del punto de colecta.
 - `species_nm`: Especie muestreada.
 - `cum_hrs`: Tiempo acumulado (horas) desde el sitio de colecta hasta el final de ese tramo.
+- `waterbody`: Nombre del cuerpo de agua.
 """)
     st.download_button("Descargar CSV", data=csv_bytes, file_name="tramos_de_desove.csv", mime="text/csv")
 
@@ -325,8 +328,7 @@ if st.sidebar.button("Ejecutar Análisis"):
             file_name="tramos_desove_shp.zip",
             mime="application/zip"
         )
-
-    st.success("Procesamiento completado!")
+    st.markdown("""<div id="proceso">Procesamiento completado! </div>""",unsafe_allow_html=True)
 
     # ----------------------------
     # 17. Generar y mostrar mapa en Python
@@ -443,7 +445,7 @@ if st.sidebar.button("Ejecutar Análisis"):
         rios <- st_read("/Rios/Red_Magdalena.shp") %>%
         st_transform(4326)
         # la ruta debe contener todos los archivos del .shp. (ajusta ruta si está en subcarpeta):
-        # Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/SHP_Magdalena/Con_altitud/Red_Magdalena.zip
+        # Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/SHP_Magdalena/Con_altitud/Red_Magdalena_n.zip
 
         Leer GeoJSON generado por Streamlit (ajusta ruta si está en subcarpeta):
         arcos_geo <- st_read("arcos_desove.geojson") %>%

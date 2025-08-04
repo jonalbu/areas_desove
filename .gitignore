@@ -8,8 +8,9 @@ Resultados/
 Municipios/
 SHP_Magdalena/sin_altitud/
 SHP_Magdalena/copia_con_altitud/
+SHP_Magdalena/altitud/
 *.zip
-!Red_Magdalena.zip
+!Red_Magdalena_n.zip
 !Dpto_84.zip
 *.xlsx
 Sitios_Colecta/*
