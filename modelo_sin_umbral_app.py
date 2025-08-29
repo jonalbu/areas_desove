@@ -1,6 +1,6 @@
 import os
 import io
-import subprocess  
+import subprocess
 import streamlit as st
 import geopandas as gpd
 import pandas as pd
@@ -11,14 +11,12 @@ from geopandas.tools import sjoin_nearest
 import zipfile
 import tempfile
 
-
-    
 # Configuración de la app
 st.set_page_config(page_title="Rutas Acuáticas", layout="wide")
 
 with open('style.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    
+
 st.markdown("<h1>Estimación Áreas de desove de Peces dulceacuícolas para la cuenca Magdalena-Cauca</h1>", unsafe_allow_html=True)
 
 st.sidebar.image("Logo/002.jpg", use_container_width=True)
@@ -27,12 +25,10 @@ st.sidebar.image("Logo/007.jpg", use_container_width=True)
 st.sidebar.markdown("""<p id="autor"> Foto por Jose L. Londoño Lopez</p>""", unsafe_allow_html=True)
 
 # Instrucciones de formato de datos
-st.markdown(""" 
+st.markdown("""
 <p id="in"> Se requiere que el archivo de Excel de entrada incluya las siguientes columnas, utilizando los mismos nombres de encabezado:</p>
 
-
- <ul>  <strong id="in"> Sitios de colecta (Excel, .xlsx):</strong>
-    
+<ul>  <strong id="in"> Sitios de colecta (Excel, .xlsx):</strong>
   <li> <code> sample_id:</code> identificador único de cada muestra.</li>
   <li> <code> place_name:</code> nombre del sitio de colecta.</li>
   <li> <code> latitude:</code> coordenada de latitud del sitio de colecta en WGS84 (p.e. 7,2345678).</li>
@@ -40,16 +36,16 @@ st.markdown("""
   <li> <code> species_name:</code> nombre de la especie.</li>
   <li> <code> min_time:</code> tiempo mínimo en horas de desarrollo de ictioplancton colectado.</li>
   <li> <code> max_time:</code> tiempo máximo en horas de desarrollo de ictioplancton colectado.</li>
-  </ul>
+</ul>
 
-<p id="nota"> <strong> NOTA:</strong> Asegusere de que los nombres de columnas coincidan exactamente.</p> 
-</p>
+<p id="nota"> <strong> NOTA:</strong> Asegúrese de que los nombres de columnas coincidan exactamente.</p>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------------
 # Parámetros de filtrado
 # ---------------------------------------------------------------------------------
 st.sidebar.header("Parámetros de Filtrado")
+
 # Cargar shapefile de centrales para obtener posibles estados
 def_shp_hydro = "DBase_Proyectos_Hidroelectricos_Magdalena/Proyectos_Hidroelectricos.shp"
 try:
@@ -67,11 +63,11 @@ status_sel = st.sidebar.multiselect(
 
 elev_max = st.sidebar.slider("Elevación máxima (m)", 0, 5000, 1200)
 grid_min = st.sidebar.slider("Strahler mínimo", 0, 10, 2)
+
 # Subida de Excel de sitios
 xls_file = st.sidebar.file_uploader("Subir Excel de sitios de Colecta (.xlsx)", type=["xlsx"])
 
-# Rutas fijas de shapefiles auxiliares en el repositorio
-# Asegúrate que estos archivos existan en tu estructura de carpetas
+# Rutas fijas de shapefiles auxiliares
 def_shp_arcs = "SHP_Magdalena/Con_altitud/Red_Magdalena_n.shp"
 
 # ---------------------------------------------------------------------------------
@@ -102,7 +98,6 @@ if st.sidebar.button("Ejecutar Análisis"):
     # ---------------------------------------------------------------------------------
     if status_sel:
         hydro = hydro[hydro['status'].isin(status_sel)]
-    # Sino, se considera todas
 
     # ---------------------------------------------------------------------------------
     # 4. Filtrar arcos por elevación y Strahler
@@ -111,15 +106,12 @@ if st.sidebar.button("Ejecutar Análisis"):
     # El peso “time” ya está en horas:
     darcs['weight_time'] = darcs['time']
 
-    # Calculamos la longitud de cada arco en el CRS actual (metros o unidades de proyección)
+    # Longitud de cada arco en el CRS actual
     darcs['length_m'] = darcs.geometry.length
-    # Usamos ese valor como peso de longitud:
     darcs['weight_len'] = darcs['length_m']
 
     # ---------------------------------------------------------------------------------
-    # 5. Construir dos grafos dirigidos:
-    #    G_time: peso = horas
-    #    G_len:  peso = longitud
+    # 5. Construir dos grafos dirigidos: tiempo y longitud
     # ---------------------------------------------------------------------------------
     G_time = nx.DiGraph()
     G_len  = nx.DiGraph()
@@ -156,21 +148,40 @@ if st.sidebar.button("Ejecutar Análisis"):
     nodes_all = gpd.GeoDataFrame(nodes_all, geometry='geometry', crs=darcs.crs)
 
     # ---------------------------------------------------------------------------------
-    # 7. Poda en centrales: cortar aristas aguas arriba de nodos de centrales
+    # 7. Poda en centrales: cortar el ARCO más cercano a cada central
+    #    y bloquear cualquier avance río arriba desde ese punto
     # ---------------------------------------------------------------------------------
-    hydro_nodes = sjoin_nearest(
-        hydro.to_crs(darcs.crs),
-        nodes_all[['node','geometry']],
-        how='left', distance_col='hydro_dist'
-    )['node'].unique()
+    HYDRO_SNAP_MAX_DIST = 800  # ajusta según tu red (unidades del CRS de darcs)
 
-    for hn in hydro_nodes:
-        if G_time_rev.has_node(hn):
-            for succ in list(G_time_rev.successors(hn)):
-                G_time_rev.remove_edge(hn, succ)
-        if G_len_rev.has_node(hn):
-            for succ in list(G_len_rev.successors(hn)):
-                G_len_rev.remove_edge(hn, succ)
+    # Emparejar cada central con el TRAMO más cercano
+    hydro2arc = sjoin_nearest(
+        hydro.to_crs(darcs.crs),
+        darcs[['from_node', 'to_node', 'geometry']],
+        how='left',
+        distance_col='hydro_dist'
+    )
+
+    for _, h in hydro2arc.iterrows():
+        # si está muy lejos de la red, no cortamos
+        if pd.isna(h.get('hydro_dist')) or (h['hydro_dist'] > HYDRO_SNAP_MAX_DIST):
+            continue
+
+        u = int(h['from_node'])   # nodo aguas arriba del tramo
+        v = int(h['to_node'])     # nodo aguas abajo del tramo
+
+        # En el grafo REVERSO, la subida es v -> u. Cortamos esa arista.
+        if G_time_rev.has_edge(v, u):
+            G_time_rev.remove_edge(v, u)
+        if G_len_rev.has_edge(v, u):
+            G_len_rev.remove_edge(v, u)
+
+        # Además bloqueamos TODA conexión río arriba desde 'u' (refuerzo)
+        if G_time_rev.has_node(u):
+            for succ in list(G_time_rev.successors(u)):
+                G_time_rev.remove_edge(u, succ)
+        if G_len_rev.has_node(u):
+            for succ in list(G_len_rev.successors(u)):
+                G_len_rev.remove_edge(u, succ)
 
     # ---------------------------------------------------------------------------------
     # 8. Snap (vincular) cada sitio al nodo más cercano
@@ -212,14 +223,13 @@ if st.sidebar.button("Ejecutar Análisis"):
         # Longitud acumulada hasta el nodo destino de cada arco:
         sub['cum_len_meters'] = sub['to_node'].map(lengths_len)
 
-        # Heredar datos de departamento, municipio, río, cod_munici, arcid_1
+        # Heredar datos
         sub['departamen'] = sub['departamen']
         sub['nombre_ent'] = sub['nombre_ent']
         sub['cod_munici'] = sub['cod_munici']
         sub['arcid_1']    = sub['arcid_1']
-        sub['waterbody'] = sub ['nombre_geo']
-        
-        
+        sub['waterbody']  = sub['nombre_geo']
+
         records.append(sub)
 
     # ---------------------------------------------------------------------------------
@@ -234,12 +244,12 @@ if st.sidebar.button("Ejecutar Análisis"):
     else:
         cols = list(darcs.columns) + [
             'sample_id','place_name','species_nm','cum_hrs','cum_len_meters',
-            'departamen','nombre_ent','cod_munici','arcid_1', 'waterbody'
+            'departamen','nombre_ent','cod_munici','arcid_1','waterbody'
         ]
         result_gdf = gpd.GeoDataFrame(columns=cols, crs=darcs.crs)
 
     # ---------------------------------------------------------------------------------
-    # 11. Agregar totales por muestra (horas, minutos y longitud total)
+    # 11. Agregar totales por muestra
     # ---------------------------------------------------------------------------------
     totals = (
         result_gdf
@@ -252,7 +262,7 @@ if st.sidebar.button("Ejecutar Análisis"):
     result_gdf = result_gdf.merge(totals, on='sample_id', how='left')
 
     # ---------------------------------------------------------------------------------
-    # 12. Longitud de cada arco (en unidades de CRS)
+    # 12. Longitud de cada arco
     # ---------------------------------------------------------------------------------
     result_gdf['length'] = result_gdf.geometry.length
 
@@ -266,15 +276,14 @@ if st.sidebar.button("Ejecutar Análisis"):
     st.map(df_map[['lat','lon']])
 
     # -----------------------
-    # 14. Exportar CSV (columnas específicas)
+    # 14. Exportar CSV
     # -----------------------
     csv_df = df_map[[
         'from_node','to_node','elevmed','arcid_1','time',
         'length','cum_len_meters','departamen','nombre_ent','cod_munici',
-        'place_name','species_nm','cum_hrs', 'waterbody'
+        'place_name','species_nm','cum_hrs','waterbody'
     ]].copy()
     csv_df = csv_df.rename(columns={'length':'longitud'})
-    # Usamos punto decimal y “;” como separador, UTF-8 con BOM:
     csv_bytes = csv_df.to_csv(index=False, sep=';', decimal=',').encode('utf-8-sig')
 
     st.markdown("""
@@ -293,16 +302,12 @@ if st.sidebar.button("Ejecutar Análisis"):
     st.download_button("Descargar CSV", data=csv_bytes, file_name="tramos_de_desove.csv", mime="text/csv")
 
     # -----------------------
-    # 15. Exportar GeoJSON (con todos los atributos) y guardarlo en disco
+    # 15. Exportar GeoJSON
     # -----------------------
     arcos_wgs = result_gdf.to_crs("EPSG:4326")
     arcos_wgs.to_file("tramos_desove.geojson", driver="GeoJSON")
-
-    # Abrimos el archivo físico y leemos sus bytes
     with open("tramos_desove.geojson", "rb") as f:
         geojson_bytes = f.read()
-
-    # Botón que ofrece esos bytes para descargar
     st.download_button(
         "Descargar GeoJSON",
         data=geojson_bytes,
@@ -311,7 +316,7 @@ if st.sidebar.button("Ejecutar Análisis"):
     )
 
     # -----------------------
-    # 16. Exportar Shapefile completo (ZIP)
+    # 16. Exportar Shapefile (ZIP)
     # -----------------------
     with tempfile.TemporaryDirectory() as tmpdir:
         shp_pref = os.path.join(tmpdir, "tramos_desove")
@@ -328,105 +333,11 @@ if st.sidebar.button("Ejecutar Análisis"):
             file_name="tramos_desove_shp.zip",
             mime="application/zip"
         )
-    st.markdown("""<div id="proceso">Procesamiento completado! </div>""",unsafe_allow_html=True)
+    st.markdown("""<div id="proceso">Procesamiento completado! </div>""", unsafe_allow_html=True)
 
     # ----------------------------
-    # 17. Generar y mostrar mapa en Python
+    # 17. Código R sugerido
     # ----------------------------
-    # import matplotlib.pyplot as plt
-    # import matplotlib.patheffects as pe  # Para contorno blanco en texto
-
-    # try:
-    #     # Leer el GeoJSON que acabamos de generar
-    #     arcos = gpd.read_file("tramos_desove.geojson").to_crs(4326)
-
-    #     # Leer límites de departamentos y ríos (ajusta rutas si hace falta)
-    #     depts = gpd.read_file("Departamentos/Dpto_84.shp").to_crs(4326)
-    #     rios  = gpd.read_file("SHP_Magdalena/Con_altitud/Red_Magdalena.shp").to_crs(4326)
-
-    #     # Preparar figura
-    #     fig, ax = plt.subplots(figsize=(10, 8))
-
-    #     # 1) Dibuja departamentos en gris
-    #     depts.plot(ax=ax, facecolor="lightgray", edgecolor="gray", linewidth=0.3)
-
-    #     # 2) Dibuja ríos en azul
-    #     rios.plot(ax=ax, color="steelblue", linewidth=0.4)
-
-    #     # 3) Dibuja cada ruta coloreada por sample_id
-    #     #    y prepara proxy artists para la leyenda:
-
-    #     unique_ids = arcos["sample_id"].unique()
-    #     cmap = plt.get_cmap("viridis", len(unique_ids))
-    #     color_map = {sid: cmap(i) for i, sid in enumerate(unique_ids)}
-
-    #     # Crear un proxy artist (línea vacía) por cada sample_id
-    #     for sid in unique_ids:
-    #         ax.plot([], [], color=color_map[sid], linewidth=2, label=str(sid))
-
-    #     # Ahora recorremos cada tramo y dibujamos las líneas
-    #     for _, row in arcos.iterrows():
-    #         sid = row["sample_id"]
-    #         geom = row.geometry
-    #         color = color_map[sid]
-
-    #         if geom.geom_type == "MultiLineString":
-    #             for part in geom.geoms:
-    #                 xs, ys = part.xy
-    #                 ax.plot(xs, ys, color=color, linewidth=0.7, alpha=0.8)
-    #         else:
-    #             xs, ys = geom.xy
-    #             ax.plot(xs, ys, color=color, linewidth=0.7, alpha=0.8)
-
-    #     # Finalmente, dibujar la leyenda con un rótulo por cada sample_id
-    #     ax.legend(
-    #         title="ID Muestra",
-    #         bbox_to_anchor=(1.05, 1),
-    #         loc="upper left",
-    #         fontsize=8,
-    #         title_fontsize=9
-    #     )
-
-    #     # 4) Agregar cuadrícula y ejes
-    #     xs = np.arange(-82, -66, 1)    # longitudes de ejemplo
-    #     ys = np.arange(-4, 15, 1)      # latitudes de ejemplo
-
-    #     ax.set_xticks(xs)
-    #     ax.set_yticks(ys)
-    #     ax.tick_params(axis="both", labelsize=8)
-    #     ax.grid(which="both", linestyle="--", linewidth=0.5, color="gray", alpha=0.7)
-
-    #     ax.set_title(
-    #         "Rutas de posibles áreas de desove sobre mapa de Colombia",
-    #         fontsize=14, fontweight="bold"
-    #     )
-    #     ax.set_xlabel("Longitud")
-    #     ax.set_ylabel("Latitud")
-
-    #     plt.tight_layout()
-    #     fig.savefig("mapa_tramos_desove.png", dpi=600)
-
-    #     # Botón de descarga para el PNG
-    #     with open("mapa_tramos_desove.png", "rb") as img_file:
-    #         st.download_button(
-    #             "Descargar mapa de desove",
-    #             img_file.read(),
-    #             file_name="mapa_tramos_desove.png",
-    #             mime="image/png"
-    #         )
-    #     plt.close(fig)
-
-    #     # Mostrar la imagen en Streamlit
-    #     st.subheader("Mapa de desove")
-    #     st.image(
-    #         "mapa_tramos_desove.png",
-    #         caption="Rutas de desove sobre mapa de Colombia",
-    #         use_container_width=True
-    #     )
-
-    # except Exception as e:
-    #     st.warning(f"No se pudo generar el mapa en Python: {e}")
-        
     r_snippet = """
         # -------------------- Paquetes necesarios --------------------
         install.packages(c("sf", "ggplot2", "dplyr", "viridis"), dependencies = TRUE)
@@ -438,19 +349,14 @@ if st.sidebar.button("Ejecutar Análisis"):
 
         # -------------------- 1. Cargar capas --------------------
         dep <- st_read("Departamento/Dpto_84.shp") %>% 
-        st_transform(4326) # la ruta debe contener todos los archivos del .shp. Capa de los departamentos
-        # la ruta debe contener todos los archivos del .shp. (ajusta ruta si está en subcarpeta):
-        #Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/Departamentos/Dpto_84.zip
+        st_transform(4326)
 
         rios <- st_read("/Rios/Red_Magdalena.shp") %>%
         st_transform(4326)
-        # la ruta debe contener todos los archivos del .shp. (ajusta ruta si está en subcarpeta):
-        # Se puede descargar en la siguiente ruta https://github.com/jonalbu/areas_desove/tree/main/SHP_Magdalena/Con_altitud/Red_Magdalena_n.zip
 
-        Leer GeoJSON generado por Streamlit (ajusta ruta si está en subcarpeta):
-        arcos_geo <- st_read("arcos_desove.geojson") %>%
+        # Leer GeoJSON generado por Streamlit
+        arcos_geo <- st_read("tramos_desove.geojson") %>%
         st_transform(4326)
-        # Cargar el archivo GeoJSON descargado desde la app de Streamlit
 
         # -------------------- 2. Mapa general --------------------
         mapa_general <- ggplot() +
@@ -489,8 +395,8 @@ if st.sidebar.button("Ejecutar Análisis"):
 
         # -------------------- 4. Exportar Mapas --------------------
         ggsave("mapa_general_colombia.png", mapa_general, width = 10, height = 8, dpi = 300)
-        ggsave("mapa_zoom_desove.png", mapa_zoom, width = 10, height = 8, dpi = 300)        
-        """
+        ggsave("mapa_zoom_desove.png", mapa_zoom, width = 10, height = 8, dpi = 300)
+    """
 
     st.subheader("Código R para reproducir el mapa fuera de esta aplicación")
     st.code(r_snippet, language="r")
